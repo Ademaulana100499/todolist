@@ -1,72 +1,72 @@
-const input = document.querySelector("input");
-const addButton = document.querySelector(".add-button");
-const todosHtml = document.querySelector(".todos");
-const emptyImage = document.querySelector(".empty-image");
-let todosJson = JSON.parse(localStorage.getItem("todos")) || [];
+class Todo {
+    constructor() {
+        this.todos = JSON.parse(localStorage.getItem("todos")) || [];
+        this.todosHtml = document.querySelector(".todos");
+        this.emptyImage = document.querySelector(".empty-image");
+        this.input = document.querySelector("input");
+        this.addButton = document.querySelector(".add-button");
 
-function getTodoHtml(todo, index){
-    let checked = todo.status == "completed" ? "checked" : "";
-    return `
-    <li class="todo">
-        <label for="${index}">
-            <input id="${index}" onclick="updateStatus(this)" type="checkbox" ${checked}></input>
-            <span class="${checked}">${todo.name}</span>
-        </label>
-        <button class="delete-btn" data-id="${index}" onclick="remove(this)"><i class="fa fa-times"></i></button>
-    </li>
-    `;
-}
+        this.addButton.addEventListener("click", () => this.add());
+        this.input.addEventListener("keyup", (e) => this.handleKeyUp(e));
 
-function showTodos(){
-    if (todosJson.length == 0 ) {
-        todosHtml.innerHTML = '';
-        emptyImage.style.display = 'block';
-    } else {
-        todosHtml.innerHTML = todosJson.map(getTodoHtml).join('');
-        emptyImage.style.display = 'none';
+        this.render();
+    }
+
+    getTodoHtml(todo, index) {
+        let checked = todo.status == "completed" ? "checked" : "";
+        return `
+        <li class="todo">
+            <label for="${index}">
+                <input id="${index}" type="checkbox" ${checked} onclick="todoApp.update(${index})">
+                <span class="${checked}">${todo.name}</span>
+            </label>
+            <button class="delete-btn" data-id="${index}" onclick="todoApp.remove(${index})"><i class="fa fa-times"></i></button>
+        </li>`;
+    }
+
+    render() {
+        if (this.todos.length === 0) {
+            this.todosHtml.innerHTML = '';
+            this.emptyImage.style.display = 'block';
+        } else {
+            this.todosHtml.innerHTML = this.todos.map(this.getTodoHtml).join('');
+            this.emptyImage.style.display = 'none';
+        }
+    }
+
+    add() {
+        const todo = this.input.value.trim();
+        if (!todo) return;
+
+        this.todos.unshift({ name: todo, status: "pending" });
+        this.input.value = '';
+        this.updateLocalStorage();
+        this.render();
+    }
+
+    update(index) {
+        const todo = this.todos[index];
+        todo.status = todo.status === "completed" ? "pending" : "completed";
+        this.updateLocalStorage();
+        this.render();
+    }
+
+    remove(index) {
+        this.todos.splice(index, 1);
+        this.updateLocalStorage();
+        this.render();
+    }
+
+    handleKeyUp(e) {
+        if (e.key === "Enter") {
+            this.add();
+        }
+    }
+
+    updateLocalStorage() {
+        localStorage.setItem("todos", JSON.stringify(this.todos));
     }
 }
 
-function addTodo(todo){
-    input.value = "";
-    todosJson.unshift({ name: todo, status: "pending" });
-    localStorage.setItem("todos", JSON.stringify(todosJson));
-    showTodos();
-}
-
-input.addEventListener("keyup", e => {
-    let todo = input.value.trim();
-    if (!todo || e.key != "Enter"){
-        return;
-    }
-    addTodo(todo);
-});
-
-addButton.addEventListener("click", () => {
-    let todo = input.value.trim();
-    if (!todo) {
-        return;
-    }
-    addTodo(todo);
-});
-
-function updateStatus(todo){
-    let todoName = todo.nextElementSibling;
-    if (todo.checked){
-        todoName.classList.add("checked");
-        todosJson[todo.id].status = "completed";
-    } else {
-        todoName.classList.remove("checked");
-        todosJson[todo.id].status = "pending";
-    }
-    localStorage.setItem("todos", JSON.stringify(todosJson));
-}
-
-function remove(todo) {
-    const index = todo.dataset.id;
-    todosJson.splice(index, 1);
-    showTodos();
-    localStorage.setItem("todos", JSON.stringify(todosJson));
-}
-
-showTodos();
+// Inisialisasi objek Todo
+const todoApp = new Todo();
